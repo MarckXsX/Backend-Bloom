@@ -3,6 +3,7 @@ package com.HospitalBloom.BackendNotas.jwt;
 import com.HospitalBloom.BackendNotas.service.impl.UserServiceImpl;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.NoArgsConstructor;
@@ -12,43 +13,53 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.util.WebUtils;
 
 import java.io.IOException;
 
 @NoArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    @Autowired
-    private JwtUtil jwtUtil;
+	@Autowired
+	private JwtUtil jwtUtil;
 
-    @Autowired
-    private UserServiceImpl userService;
+	@Autowired
+	private UserServiceImpl userService;
 
-    @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-            throws ServletException, IOException {
+	@Override
+	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+			throws ServletException, IOException {
 
-        final String authorizationHeader = request.getHeader("Authorization");
+		String userName = null;
+		try {
 
-        String userName = null;
-        String jwt = null;
+			String jwt = getJwt(request);
 
-        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")){
-            jwt = authorizationHeader.substring(7);
-            userName = jwtUtil.extractUserName(jwt);
-        }
+			if (jwt != null) {
+				userName = jwtUtil.extractUserName(jwt);
+			}
 
-        if (userName != null && SecurityContextHolder.getContext().getAuthentication() == null){
-            UserDetails userDetails = userService.loadUserByUsername(userName);
+			if (userName != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+				UserDetails userDetails = userService.loadUserByUsername(userName);
 
-            if (jwtUtil.validateToken(jwt, userDetails)){
-                UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
-                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                usernamePasswordAuthenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
-            }
-        }
-        filterChain.doFilter(request, response);
+				if (jwtUtil.validateToken(jwt, userDetails)) {
+					UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(
+							userDetails, null, userDetails.getAuthorities());
+					usernamePasswordAuthenticationToken
+							.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+					SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+				}
+			}
+		} catch (Exception e) {
+			System.out.println("Exception = " + e.getMessage());
+		}
+		filterChain.doFilter(request, response);
 
-    }
+	}
+
+	private String getJwt(HttpServletRequest request) {
+		Cookie cookie = WebUtils.getCookie(request, "jwt");
+		return cookie != null ? cookie.getValue() : null;
+
+	}
 }

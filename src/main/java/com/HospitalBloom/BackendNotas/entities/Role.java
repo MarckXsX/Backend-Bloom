@@ -12,10 +12,10 @@ import lombok.NoArgsConstructor;
 @Entity
 public class Role {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Integer id;
 
-    @Column(nullable = false)
-    private RoleList name;
+	@Column(nullable = false)
+	private RoleList name;
 }

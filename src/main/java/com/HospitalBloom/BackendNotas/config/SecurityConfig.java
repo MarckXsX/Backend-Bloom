@@ -28,64 +28,61 @@ import java.util.List;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Bean
-    protected SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
-        http.cors(Customizer.withDefaults())
-                .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(auth -> auth.requestMatchers("/auth/register", "/auth/login")
-                        .permitAll()
-                        .anyRequest().authenticated())
-                .httpBasic(Customizer.withDefaults())
-                .exceptionHandling(exception -> exception.authenticationEntryPoint(jwtEntryPoint()))
-                .addFilterBefore(jwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
-        return http.build();
-    }
+	@Bean
+	protected SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+		http.cors(Customizer.withDefaults()).csrf(AbstractHttpConfigurer::disable)
+				.authorizeHttpRequests(auth -> auth.requestMatchers("/auth/register", "/auth/login").permitAll()
+						.anyRequest().authenticated())
+				.httpBasic(Customizer.withDefaults())
+				.exceptionHandling(exception -> exception.authenticationEntryPoint(jwtEntryPoint()))
+				.addFilterBefore(jwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
+		return http.build();
+	}
 
-    @Bean
-    public JwtAuthenticationFilter jwtTokenFilter(){
-        return new JwtAuthenticationFilter();
-    }
+	@Bean
+	public JwtAuthenticationFilter jwtTokenFilter() {
+		return new JwtAuthenticationFilter();
+	}
 
-    @Bean
-    public JwtEntryPoint jwtEntryPoint(){
-        return new JwtEntryPoint();
-    }
+	@Bean
+	public JwtEntryPoint jwtEntryPoint() {
+		return new JwtEntryPoint();
+	}
 
-    @Bean
-    public PasswordEncoder passwordEncoder(){
-        return new BCryptPasswordEncoder();
-    }
+	@Bean
+	public PasswordEncoder passwordEncoder() {
+		return new BCryptPasswordEncoder();
+	}
 
-    @Bean
-    public UserDetailsService userDetailService(){
-        return new UserServiceImpl();
-    }
+	@Bean
+	public UserDetailsService userDetailService() {
+		return new UserServiceImpl();
+	}
 
-    @Bean
-    public AuthenticationProvider authenticationProvider(){
-        DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
-        authenticationProvider.setUserDetailsService(userDetailService());
-        authenticationProvider.setPasswordEncoder(passwordEncoder());
-        return authenticationProvider;
-    }
+	@Bean
+	public AuthenticationProvider authenticationProvider() {
+		DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
+		authenticationProvider.setUserDetailsService(userDetailService());
+		authenticationProvider.setPasswordEncoder(passwordEncoder());
+		return authenticationProvider;
+	}
 
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
-        return authConfig.getAuthenticationManager();
-    }
+	@Bean
+	public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
+		return authConfig.getAuthenticationManager();
+	}
 
+	@Bean
+	CorsConfigurationSource corsConfigurationSource() {
+		CorsConfiguration configuration = new CorsConfiguration();
 
-    @Bean
-    CorsConfigurationSource corsConfigurationSource(){
-        CorsConfiguration configuration = new CorsConfiguration();
+		configuration.setAllowedOrigins(List.of("http://localhost:4200"));
+		configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+		configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+		configuration.setAllowCredentials(true);
 
-        configuration.setAllowedOrigins(List.of("http://localhost:4200"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
-        configuration.setAllowCredentials(true);
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
-    }
+		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+		source.registerCorsConfiguration("/**", configuration);
+		return source;
+	}
 }

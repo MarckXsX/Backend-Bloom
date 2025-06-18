@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class GenericResponseDto<T> {
-    private T data;
-    private String message;
-    private Integer status;
+	private T data;
+	private String message;
+	private Integer status;
 }
